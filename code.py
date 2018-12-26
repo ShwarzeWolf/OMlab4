@@ -6,7 +6,33 @@ Created on Wed Dec 23 17:58:28 2018
 """
 #import libraries to work
 import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+ 
 from sklearn.model_selection import train_test_split
+
+from sklearn.preprocessing import StandardScaler
+from sklearn.linear_model import LinearRegression, Lasso, Ridge
+from sklearn.model_selection import train_test_split
+from sklearn.metrics import mean_squared_log_error, mean_squared_error
+from sklearn.preprocessing import PolynomialFeatures
+from sklearn.linear_model import LassoCV, RidgeCV
+from sklearn.preprocessing import RobustScaler
+import warnings
+import xgboost as xgb
+from hyperopt import hp
+from h import fmin, tpe, STATUS_OK, Trials
+
+np.set_printoptions(suppress=True)
+warnings.filterwarnings('ignore')
+
+def rmsle(ypred, ytest): 
+    assert len(ytest) == len(ypred)
+    return np.sqrt(np.mean((np.log1p(ypred) - np.log1p(ytest))**2))
+
+def print_error_info(y_test,predicted):
+    print("RMSE: ", np.sqrt(mean_squared_error(y_test, predicted)))
+    print("RMSLE: ", rmsle(y_test, predicted))
 
 fileName = "train.csv"
 
@@ -45,5 +71,41 @@ rawData.drop(['SalePrice'],axis=1,inplace=True)
 
 rawData = pd.get_dummies(rawData)
 
-X_train, X_test, y_train, y_test = train_test_split(rawData, target, test_size=0.2,random_state=2)
+X_train, X_test, y_train, y_test = train_test_split(rawData, target, test_size=0.2)
 
+
+#LineraRegression
+LR = LinearRegression()
+LR.fit(X_train,y_train)
+predicted = LR.predict(X_test)
+
+print_error_info(predicted,y_test)
+
+print(LR.coef_.shape)
+print(LR.coef_)
+
+plt.scatter(y_test, predicted)
+
+#LassoRegression
+lasso = LassoCV(alphas=np.logspace(-1,4,25))
+
+lasso.fit(X_train,y_train)
+
+predicted = lasso.predict(X_test)
+print_error_info(predicted, y_test)
+
+print(lasso.coef_.shape)
+
+plt.scatter(y_test, predicted)
+
+#XGBoost
+
+model = xgb.XGBRegressor(n_estimators=100, learning_rate=0.08, gamma=0, subsample=0.75,
+                           colsample_bytree=1, max_depth=7)
+
+traindf, testdf = train_test_split(X_train, test_size = 0.3)
+model.fit(X_train, y_train)
+predictions = model.predict(X_test)
+print_error_info(y_test, predictions)
+
+plt.scatter(y_test, predictions)

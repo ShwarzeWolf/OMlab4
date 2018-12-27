@@ -9,7 +9,7 @@ import matplotlib.pyplot as plt
 import xgboost as xgb 
 
 from sklearn.model_selection import train_test_split
-from sklearn.linear_model import LinearRegression, LassoCV
+from sklearn.linear_model import LinearRegression, Lasso
 from sklearn import metrics
 
 allowedPercentageOfMissingData = 50
@@ -26,7 +26,7 @@ missingValuesPercentage = 100 * rawData.isnull().sum() / len(rawData)
         
 missingValuesTable = pd.concat([missingValues,missingValuesPercentage], axis=1)
 missingValuesTable = missingValuesTable.rename(columns = {0 : 'Missing Values', 1 : '% of Total Values'})
-missingValuesTable = missingValuesTable[missingValuesTable.iloc[:,1] != 0].sort_values('% of Total Values', ascending=False).round(1)
+missingValuesTable = missingValuesTable[missingValuesTable.iloc[:,1] != 0].sort_values('% of Total Values', ascending = False).round(1)
 
 #print(missingValuesTable)
 
@@ -61,7 +61,7 @@ print('Root Mean Squared Log Error:', rmsle(predictedValues, yTest))
 
 
 print('-------LassoRegression-------')
-lasso = LassoCV(alphas=np.logspace(-1,4,25))
+lasso = Lasso(alpha = 0.01, max_iter = 10e5)
 lasso.fit(XTrain,yTrain)
 predictedValues = lasso.predict(XTest)
 
@@ -70,8 +70,7 @@ print('Root Mean Squared Log Error:', rmsle(predictedValues, yTest))
 
 
 print('-------XGBoost--------')
-model = xgb.XGBRegressor(n_estimators=100, learning_rate=0.08, gamma=0, subsample=0.75,
-                           colsample_bytree=1, max_depth=10)
+model = xgb.XGBRegressor(n_estimators = 100, learning_rate = 0.05, gamma = 0.1, subsample = 0.75,colsample_bytree = 1, max_depth=10)
 
 model.fit(XTrain, yTrain)
 predictedValues = model.predict(XTest)
